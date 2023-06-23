@@ -1,6 +1,6 @@
 // CONFIGURACAO DO CLIENT HTTP AXIOS
 const api = axios.create({
-    baseURL: 'https://api.disneyapi.dev'
+    baseURL: 'https://rickandmortyapi.com/api'
 });
 
 // CAPTURAR OS ELEMENTOS DA DOM QUE SERÃO MODIFICADOS PELO JS
@@ -19,29 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     qtdPersonagensSpan.innerText = dadosRetornados.totalPersonagens
 
-    // ESSA LINHA ABAIXO VOCES NAO FAZEM - nao fazer o map
-    const listaManipulada = dadosRetornados.personagens.map((personagem, index) => {
-        if (index % 2 === 0) {
-            const dado = {
-                ...personagem, // spread operator - copia todos os dados que tiverem dentro de um array ou objeto
-                status: 'Alive'
-            }
-
-            return dado
-        } else if (index % 3 === 0) {
-            return {
-                ...personagem,
-                status: 'Dead'
-            }
-        } else {
-            return {
-                ...personagem,
-                status: 'Unknown'
-            }
-        }
-    });
-
-    montarColunasCards(listaManipulada)
+    montarColunasCards(dadosRetornados.personagens)
     mudarBotoes(dadosRetornados.paginaAnterior, dadosRetornados.proximaPagina)
 
 });
@@ -53,7 +31,7 @@ botaoPrev.addEventListener('click', paginaAnterior)
 function montarColunasCards(listaPersonagens) {
     espacoCardsRow.innerHTML = ""
 
-    listaPersonagens.forEach((personagem) => {
+    listaPersonagens.forEach(async (personagem) => {
         /*
             <div class="col-12 col-md-6 col-lg-4">
                     <div class="card w-100">
@@ -94,7 +72,7 @@ function montarColunasCards(listaPersonagens) {
 
         // CRIA IMAGEM
         const imgCard = document.createElement('img')
-        imgCard.setAttribute('src', `${personagem.imageUrl}`)
+        imgCard.setAttribute('src', `${personagem.image}`)
         imgCard.setAttribute('class', 'card-img-top')
         imgCard.setAttribute('alt', `${personagem.name}`)
 
@@ -110,21 +88,49 @@ function montarColunasCards(listaPersonagens) {
         // CRIA PARAGRAFO
         const descricaoPersonagem = document.createElement('p')
         descricaoPersonagem.setAttribute('class', 'card-text')
-        descricaoPersonagem.innerHTML = `
-            <span class="${personagem.status === 'Alive' ? 'text-success' : personagem.status === 'Dead' ? 'text-danger' : 'text-secondary'}">
-                <i class="bi bi-caret-right-fill"></i>
-            </span>
-            Vivo - Humano
-        `
+
+        switch (personagem.status) {
+            case 'Alive':
+                descricaoPersonagem.innerHTML = `
+                    <span class="text-success">
+                        <i class="bi bi-caret-right-fill"></i>
+                    </span>
+                    Vivo - ${personagem.species}
+                `
+                break;
+
+            case 'Dead':
+                descricaoPersonagem.innerHTML = `
+                    <span class="text-danger">
+                        <i class="bi bi-caret-right-fill"></i>
+                    </span>
+                    Morto - ${personagem.species}
+                `
+                break;
+
+            default:
+                descricaoPersonagem.innerHTML = `
+                    <span class="text-secondary">
+                        <i class="bi bi-caret-right-fill"></i>
+                    </span>
+                    Desconhecido - ${personagem.species}
+                `
+        }
+
 
         // CRIA DL
+        const dadosEpisodio = await buscarDadosEpisodio(personagem.episode[personagem.episode.length - 1])
+
         const detalhamentoPersonagem = document.createElement('dl');
         detalhamentoPersonagem.innerHTML = `
             <dt>Última localização conhecida:</dt>
-            <dd>Planeta XPTO</dd>
+            <dd>${personagem.location.name}</dd>
 
             <dt>Visto a última vez em:</dt>
-            <dd>Nome do Capitulo</dd>
+            <dd>${dadosEpisodio.nomeEpisodio}</dd>
+
+            <dt>Foi ao ar em:</dt>
+            <dd>${dadosEpisodio.dataLancamento}</dd>
         `
 
         // APPENDS - criar os filhos dentros dos respectivos elementos pais
@@ -145,6 +151,7 @@ function montarColunasCards(listaPersonagens) {
 function mudarBotoes(prev, next) {
     botaoAtual.children[0].innerText = paginaAtual
 
+    // !null => !false => true
     if (!prev) {
         botaoPrev.classList.remove('cursor-pointer')
         botaoPrev.classList.add('disabled')
@@ -167,17 +174,16 @@ async function buscarPersonagens(pagina) {
     try {
         const resposta = await api.get('/character', {
             params: {
-                pageSize: 20, // ISSO NAO É PRA FAZER NO RICKY AND MORTY
                 page: pagina,
             }
         });
 
         const dadosApi = {
-            totalPaginas: resposta.data.info.totalPages,
-            totalPersonagens: resposta.data.info.totalPages * resposta.data.info.count,
-            personagens: resposta.data.data,
-            proximaPagina: resposta.data.info.nextPage,
-            paginaAnterior: resposta.data.info.previousPage
+            totalPaginas: resposta.data.info.pages,
+            totalPersonagens: resposta.data.info.count,
+            personagens: resposta.data.results,
+            proximaPagina: resposta.data.info.next,
+            paginaAnterior: resposta.data.info.prev
         }
 
         return dadosApi
@@ -189,6 +195,21 @@ async function buscarPersonagens(pagina) {
     }
 }
 
+async function buscarDadosEpisodio(url) {
+    try {
+        const resposta = await axios.get(url)
+
+        // resposta.data
+        return {
+            id: resposta.data.id,
+            nomeEpisodio: resposta.data.name,
+            dataLancamento: resposta.data.air_date
+        }
+    } catch {
+        alert("Deu algo errado na busca do episódio")
+    }
+}
+
 async function proximaPagina() {
     // verificar se o botão esta desabilitado
     if (!botaoNext.classList.contains('disabled')) {
@@ -197,29 +218,7 @@ async function proximaPagina() {
 
         const dadosAPI = await buscarPersonagens(paginaAtual)
 
-        // ESSA LINHA ABAIXO VOCES NAO FAZEM - nao fazer o map
-        const listaManipulada = dadosAPI.personagens.map((personagem, index) => {
-            if (index % 2 === 0) {
-                const dado = {
-                    ...personagem, // spread operator - copia todos os dados que tiverem dentro de um array ou objeto
-                    status: 'Alive'
-                }
-
-                return dado
-            } else if (index % 3 === 0) {
-                return {
-                    ...personagem,
-                    status: 'Dead'
-                }
-            } else {
-                return {
-                    ...personagem,
-                    status: 'Unknown'
-                }
-            }
-        });
-
-        montarColunasCards(listaManipulada)
+        montarColunasCards(dadosAPI.personagens)
         mudarBotoes(dadosAPI.paginaAnterior, dadosAPI.proximaPagina)
     }
 }
@@ -232,29 +231,7 @@ async function paginaAnterior() {
 
         const dadosAPI = await buscarPersonagens(paginaAtual)
 
-        // ESSA LINHA ABAIXO VOCES NAO FAZEM - nao fazer o map
-        const listaManipulada = dadosAPI.personagens.map((personagem, index) => {
-            if (index % 2 === 0) {
-                const dado = {
-                    ...personagem, // spread operator - copia todos os dados que tiverem dentro de um array ou objeto
-                    status: 'Alive'
-                }
-
-                return dado
-            } else if (index % 3 === 0) {
-                return {
-                    ...personagem,
-                    status: 'Dead'
-                }
-            } else {
-                return {
-                    ...personagem,
-                    status: 'Unknown'
-                }
-            }
-        });
-
-        montarColunasCards(listaManipulada)
+        montarColunasCards(dadosAPI.personagens)
         mudarBotoes(dadosAPI.paginaAnterior, dadosAPI.proximaPagina)
     }
 }
