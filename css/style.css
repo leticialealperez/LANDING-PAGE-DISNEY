@@ -40,7 +40,7 @@ h1 {
 .bg-color-main {
     background-color: #252525;
     background-image: url(../assets/FUNDO_2.jpg);
-    background-position: bottom;
+    background-position: bottom right;
     background-size: contain;
     background-repeat: no-repeat;
 }
