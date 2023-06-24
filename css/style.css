@@ -29,7 +29,7 @@ h1 {
 }
 
 .card {
-    height: 500px;
+    height: min-content;
 }
 
 .card-img-top {
@@ -68,5 +68,16 @@ h1 {
 
     h1 {
         font-size: 3.5rem;
+    }
+}
+
+@media (min-width: 400px) and (max-width: 767px) {
+    .card {
+        max-width: 352px;
+    }
+
+    .espaco-card {
+        display: flex;
+        justify-content: center;
     }
 }

@@ -64,7 +64,7 @@ function montarColunasCards(listaPersonagens) {
 
         // CRIA COLUNA
         const divCol = document.createElement('div')
-        divCol.setAttribute('class', 'col-12 col-md-6 col-lg-4')
+        divCol.setAttribute('class', 'col-12 col-md-6 col-lg-4 espaco-card')
 
         // CRIA CARD
         const divCard = document.createElement('div')
@@ -118,9 +118,10 @@ function montarColunasCards(listaPersonagens) {
         }
 
 
-        // CRIA DL
+
         const dadosEpisodio = await buscarDadosEpisodio(personagem.episode[personagem.episode.length - 1])
 
+        // CRIA DL
         const detalhamentoPersonagem = document.createElement('dl');
         detalhamentoPersonagem.innerHTML = `
             <dt>Última localização conhecida:</dt>
