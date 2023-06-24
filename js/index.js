@@ -68,12 +68,12 @@ function montarColunasCards(listaPersonagens) {
 
         // CRIA CARD
         const divCard = document.createElement('div')
-        divCard.setAttribute('class', 'card w-100')
+        divCard.setAttribute('class', 'card w-100 rounded-4 shadow')
 
         // CRIA IMAGEM
         const imgCard = document.createElement('img')
         imgCard.setAttribute('src', `${personagem.image}`)
-        imgCard.setAttribute('class', 'card-img-top')
+        imgCard.setAttribute('class', 'card-img-top rounded-top-4')
         imgCard.setAttribute('alt', `${personagem.name}`)
 
         // CRIA CARD BODY
